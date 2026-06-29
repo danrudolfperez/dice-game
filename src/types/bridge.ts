@@ -1,5 +1,7 @@
+import type { RollOutcome } from './game'
+
 export interface RollController {
-  rollDice(result: number): void
+  rollDice(result: number, outcome: RollOutcome): void
 }
 
 export interface AudioController {

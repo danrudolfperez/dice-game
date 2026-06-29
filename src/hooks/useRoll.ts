@@ -33,7 +33,7 @@ export function useRoll(
         onComplete?.(rollResult)
       })
 
-      bridge.rollDice(displayValue)
+      bridge.rollDice(displayValue, outcome)
     },
     [bridge, isRolling, onComplete]
   )
