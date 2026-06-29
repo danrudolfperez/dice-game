@@ -1,0 +1,204 @@
+import Phaser from 'phaser'
+import { ROLL_MIN, ROLL_MAX } from '@/types/game'
+
+const CANVAS_W = 400
+const CANVAS_H = 400
+const S = 72                   // cube half-size
+const TILT = Math.PI / 4       // 45° isometric tilt
+const ANIM_DURATION_MS = 1400
+const STEP_MS = 16             // ~60fps
+
+type ReadyCb = () => void
+type RollCompleteCb = (result: number) => void
+
+interface Face {
+  normal: [number, number, number]
+  verts: [number, number, number][]
+  fill: number
+  stroke: number
+}
+
+// Top is lightest, visible sides are medium, back/bottom are darkest
+const FACES: Face[] = [
+  { normal: [0, -1, 0], verts: [[-S,-S,S],[S,-S,S],[S,-S,-S],[-S,-S,-S]], fill: 0xf5f0ff, stroke: 0x9d6ff0 }, // top — lightest
+  { normal: [0, 0, 1],  verts: [[-S,-S,S],[S,-S,S],[S,S,S],[-S,S,S]],    fill: 0xd4b8f0, stroke: 0x7c3aed }, // front — medium
+  { normal: [-1, 0, 0], verts: [[-S,-S,S],[-S,-S,-S],[-S,S,-S],[-S,S,S]], fill: 0x9d78d8, stroke: 0x5c1acd }, // left — dark
+  { normal: [1, 0, 0],  verts: [[S,-S,-S],[S,-S,S],[S,S,S],[S,S,-S]],    fill: 0xb898e4, stroke: 0x6c2ad8 }, // right — medium-dark
+  { normal: [0, 0, -1], verts: [[S,-S,-S],[-S,-S,-S],[-S,S,-S],[S,S,-S]], fill: 0x7060b0, stroke: 0x4c1aad }, // back — darkest
+  { normal: [0, 1, 0],  verts: [[-S,S,-S],[S,S,-S],[S,S,S],[-S,S,S]],    fill: 0x5a4a98, stroke: 0x3c0a8d }, // bottom — darkest
+]
+
+export class DiceScene extends Phaser.Scene {
+  private diceContainer!: Phaser.GameObjects.Container
+  private shadowGraphics!: Phaser.GameObjects.Graphics
+  private resultText!: Phaser.GameObjects.Text
+  private isAnimating = false
+  private animTimer: ReturnType<typeof setTimeout> | null = null
+  private readyCbs: ReadyCb[] = []
+  private rollCompleteCb: RollCompleteCb | null = null
+  private currentAngle = Math.PI / 6  // 30° — front face clearly closest for label
+
+  constructor() {
+    super({ key: 'DiceScene' })
+  }
+
+  create() {
+    const cx = CANVAS_W / 2
+    const cy = CANVAS_H / 2 - 10
+
+    this.cameras.main.setBackgroundColor('#1a1a2e')
+
+    // Ground shadow (static, drawn behind the cube)
+    this.shadowGraphics = this.add.graphics()
+    this.shadowGraphics.fillStyle(0x000000, 0.35)
+    this.shadowGraphics.fillEllipse(cx, cy + 140, S * 2.4, S * 0.55)
+
+    this.diceContainer = this.add.container(cx, cy)
+    this.drawCube(1, this.currentAngle)
+
+    this.resultText = this.add
+      .text(cx, cy + 162, '', {
+        fontSize: '22px',
+        color: '#a78bfa',
+        fontFamily: 'system-ui, sans-serif',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0.5)
+
+    this.readyCbs.forEach((cb) => cb())
+    this.readyCbs = []
+  }
+
+  private project(x: number, y: number, z: number, ry: number): { px: number; py: number } {
+    const x1 = x * Math.cos(ry) + z * Math.sin(ry)
+    const z1 = -x * Math.sin(ry) + z * Math.cos(ry)
+    return {
+      px: x1,
+      py: y * Math.cos(TILT) + z1 * Math.sin(TILT),
+    }
+  }
+
+  private faceDepth(verts: [number, number, number][], ry: number): number {
+    return (
+      verts.reduce((sum, [x, y, z]) => {
+        const z1 = -x * Math.sin(ry) + z * Math.cos(ry)
+        return sum + (y * Math.cos(TILT) + z1 * Math.sin(TILT))
+      }, 0) / verts.length
+    )
+  }
+
+  private isVisible(nx: number, ny: number, nz: number, ry: number): boolean {
+    const nzRot = -nx * Math.sin(ry) + nz * Math.cos(ry)
+    return -ny * Math.sin(TILT) + nzRot * Math.cos(TILT) > 0
+  }
+
+  private drawCube(value: number, ry: number) {
+    this.diceContainer.removeAll(true)
+
+    const g = this.add.graphics()
+
+    const visible = FACES.filter((f) => this.isVisible(f.normal[0], f.normal[1], f.normal[2], ry))
+      .map((f) => ({
+        ...f,
+        depth: this.faceDepth(f.verts, ry),
+        pts: f.verts.map(([x, y, z]) => this.project(x, y, z, ry)),
+      }))
+      .sort((a, b) => a.depth - b.depth)  // back-to-front
+
+    visible.forEach((f) => {
+      g.fillStyle(f.fill, 1)
+      g.beginPath()
+      g.moveTo(f.pts[0].px, f.pts[0].py)
+      for (let i = 1; i < f.pts.length; i++) g.lineTo(f.pts[i].px, f.pts[i].py)
+      g.closePath()
+      g.fillPath()
+
+      g.lineStyle(2, f.stroke, 1)
+      g.beginPath()
+      g.moveTo(f.pts[0].px, f.pts[0].py)
+      for (let i = 1; i < f.pts.length; i++) g.lineTo(f.pts[i].px, f.pts[i].py)
+      g.closePath()
+      g.strokePath()
+    })
+
+    this.diceContainer.add(g)
+
+    // Draw number on the frontmost face
+    if (visible.length > 0) {
+      const front = visible[visible.length - 1]
+      const fcx = front.pts.reduce((s, p) => s + p.px, 0) / 4
+      const fcy = front.pts.reduce((s, p) => s + p.py, 0) / 4
+      const label = this.add
+        .text(fcx, fcy, String(value), {
+          fontSize: value > 9 ? '46px' : '60px',
+          color: '#1a1a2e',
+          fontFamily: 'system-ui, sans-serif',
+          fontStyle: 'bold',
+        })
+        .setOrigin(0.5)
+      this.diceContainer.add(label)
+    }
+  }
+
+  rollDice(result: number) {
+    if (this.isAnimating) return
+    this.isAnimating = true
+    this.resultText.setText('')
+
+    const clampedResult = Math.max(ROLL_MIN, Math.min(ROLL_MAX, result))
+    const startAngle = this.currentAngle
+    const totalRotation = Math.PI * 6  // 3 full spins — returns to starting angle
+    let elapsed = 0
+
+    const spinStep = () => {
+      elapsed += STEP_MS
+      const progress = Math.min(elapsed / ANIM_DURATION_MS, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)  // ease-out cubic
+      const ry = startAngle + totalRotation * eased
+
+      // Shadow shrinks slightly during "bounce" at peak speed
+      const shadowScale = 1 - Math.sin(progress * Math.PI) * 0.15
+      this.shadowGraphics.setScale(shadowScale, 1)
+
+      this.drawCube(
+        progress >= 1 ? clampedResult : Math.floor(Math.random() * ROLL_MAX) + ROLL_MIN,
+        ry,
+      )
+      this.currentAngle = ry
+
+      if (progress >= 1) {
+        this.shadowGraphics.setScale(1, 1)
+        this.isAnimating = false
+        this.animTimer = null
+        this.resultText.setText(`Rolled: ${clampedResult}`)
+        this.rollCompleteCb?.(clampedResult)
+        return
+      }
+
+      this.animTimer = setTimeout(spinStep, STEP_MS)
+    }
+
+    this.animTimer = setTimeout(spinStep, STEP_MS)
+  }
+
+  setMuted(_muted: boolean) {}
+
+  onReady(cb: ReadyCb) {
+    if (this.sys.isActive()) cb()
+    else this.readyCbs.push(cb)
+  }
+
+  onRollComplete(cb: RollCompleteCb) {
+    this.rollCompleteCb = cb
+  }
+
+  destroy() {
+    if (this.animTimer !== null) {
+      clearTimeout(this.animTimer)
+      this.animTimer = null
+    }
+    this.readyCbs = []
+    this.rollCompleteCb = null
+    this.isAnimating = false
+  }
+}
