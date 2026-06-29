@@ -49,7 +49,7 @@ function App() {
   useKeyboardShortcut('Space', handleRoll, !isLoading && !isRolling && !!bridge)
 
   return (
-    <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-page-bg flex items-center justify-center p-4">
       <div className="flex flex-col lg:flex-row gap-6 w-full max-w-3xl">
         <div className="flex-1 flex flex-col gap-4">
           <GameCanvas ref={canvasRef} isLoading={isLoading} error={error} />

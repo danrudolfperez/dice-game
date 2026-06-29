@@ -1,5 +1,7 @@
 import Phaser from 'phaser'
 import { ROLL_MIN, ROLL_MAX } from '@/types/game'
+import type { RollOutcome } from '@/types/game'
+import { theme } from '@/styles/theme'
 
 const CANVAS_W = 400
 const CANVAS_H = 400
@@ -20,37 +22,45 @@ interface Face {
 
 // Top is lightest, visible sides are medium, back/bottom are darkest
 const FACES: Face[] = [
-  { normal: [0, -1, 0], verts: [[-S,-S,S],[S,-S,S],[S,-S,-S],[-S,-S,-S]], fill: 0xf5f0ff, stroke: 0x9d6ff0 }, // top — lightest
-  { normal: [0, 0, 1],  verts: [[-S,-S,S],[S,-S,S],[S,S,S],[-S,S,S]],    fill: 0xd4b8f0, stroke: 0x7c3aed }, // front — medium
-  { normal: [-1, 0, 0], verts: [[-S,-S,S],[-S,-S,-S],[-S,S,-S],[-S,S,S]], fill: 0x9d78d8, stroke: 0x5c1acd }, // left — dark
-  { normal: [1, 0, 0],  verts: [[S,-S,-S],[S,-S,S],[S,S,S],[S,S,-S]],    fill: 0xb898e4, stroke: 0x6c2ad8 }, // right — medium-dark
-  { normal: [0, 0, -1], verts: [[S,-S,-S],[-S,-S,-S],[-S,S,-S],[S,S,-S]], fill: 0x7060b0, stroke: 0x4c1aad }, // back — darkest
-  { normal: [0, 1, 0],  verts: [[-S,S,-S],[S,S,-S],[S,S,S],[-S,S,S]],    fill: 0x5a4a98, stroke: 0x3c0a8d }, // bottom — darkest
+  { normal: [0, -1, 0], verts: [[-S,-S,S],[S,-S,S],[S,-S,-S],[-S,-S,-S]], ...theme.dice.top    }, // top — lightest
+  { normal: [0, 0, 1],  verts: [[-S,-S,S],[S,-S,S],[S,S,S],[-S,S,S]],    ...theme.dice.front  }, // front — medium
+  { normal: [-1, 0, 0], verts: [[-S,-S,S],[-S,-S,-S],[-S,S,-S],[-S,S,S]], ...theme.dice.left   }, // left — dark
+  { normal: [1, 0, 0],  verts: [[S,-S,-S],[S,-S,S],[S,S,S],[S,S,-S]],    ...theme.dice.right  }, // right — medium-dark
+  { normal: [0, 0, -1], verts: [[S,-S,-S],[-S,-S,-S],[-S,S,-S],[S,S,-S]], ...theme.dice.back   }, // back — darkest
+  { normal: [0, 1, 0],  verts: [[-S,S,-S],[S,S,-S],[S,S,S],[-S,S,S]],    ...theme.dice.bottom }, // bottom — darkest
 ]
 
 export class DiceScene extends Phaser.Scene {
   private diceContainer!: Phaser.GameObjects.Container
   private shadowGraphics!: Phaser.GameObjects.Graphics
   private resultText!: Phaser.GameObjects.Text
+  private bgMusic: Phaser.Sound.BaseSound | null = null
   private isAnimating = false
   private animTimer: ReturnType<typeof setTimeout> | null = null
   private readyCbs: ReadyCb[] = []
   private rollCompleteCb: RollCompleteCb | null = null
   private currentAngle = Math.PI / 6  // 30° — front face clearly closest for label
+  private _muted = false
 
   constructor() {
     super({ key: 'DiceScene' })
+  }
+
+  preload() {
+    this.load.audio('bg',   '/audio/Orquidario - Quincas Moreira.mp3')
+    this.load.audio('win',  '/audio/win.mp3')
+    this.load.audio('loss', '/audio/lose.mp3')
   }
 
   create() {
     const cx = CANVAS_W / 2
     const cy = CANVAS_H / 2 - 10
 
-    this.cameras.main.setBackgroundColor('#1a1a2e')
+    this.cameras.main.setBackgroundColor(theme.colors.canvasBg)
 
     // Ground shadow (static, drawn behind the cube)
     this.shadowGraphics = this.add.graphics()
-    this.shadowGraphics.fillStyle(0x000000, 0.35)
+    this.shadowGraphics.fillStyle(theme.dice.shadow.color, theme.dice.shadow.alpha)
     this.shadowGraphics.fillEllipse(cx, cy + 140, S * 2.4, S * 0.55)
 
     this.diceContainer = this.add.container(cx, cy)
@@ -59,11 +69,15 @@ export class DiceScene extends Phaser.Scene {
     this.resultText = this.add
       .text(cx, cy + 162, '', {
         fontSize: '22px',
-        color: '#a78bfa',
-        fontFamily: 'system-ui, sans-serif',
+        color: theme.colors.accentText,
+        fontFamily: theme.font.serif,
         fontStyle: 'bold',
       })
       .setOrigin(0.5)
+
+    this.bgMusic = this.sound.add('bg', { loop: true, volume: 0.35 })
+    this.bgMusic.play()
+    this.sound.setMute(this._muted)
 
     this.readyCbs.forEach((cb) => cb())
     this.readyCbs = []
@@ -131,8 +145,8 @@ export class DiceScene extends Phaser.Scene {
       const label = this.add
         .text(fcx, fcy, String(value), {
           fontSize: value > 9 ? '46px' : '60px',
-          color: '#1a1a2e',
-          fontFamily: 'system-ui, sans-serif',
+          color: theme.colors.diceLabel,
+          fontFamily: theme.font.serif,
           fontStyle: 'bold',
         })
         .setOrigin(0.5)
@@ -140,7 +154,7 @@ export class DiceScene extends Phaser.Scene {
     }
   }
 
-  rollDice(result: number) {
+  rollDice(result: number, outcome: RollOutcome) {
     if (this.isAnimating) return
     this.isAnimating = true
     this.resultText.setText('')
@@ -171,6 +185,7 @@ export class DiceScene extends Phaser.Scene {
         this.isAnimating = false
         this.animTimer = null
         this.resultText.setText(`Rolled: ${clampedResult}`)
+        this.sound.play(outcome)
         this.rollCompleteCb?.(clampedResult)
         return
       }
@@ -181,7 +196,10 @@ export class DiceScene extends Phaser.Scene {
     this.animTimer = setTimeout(spinStep, STEP_MS)
   }
 
-  setMuted(_muted: boolean) {}
+  setMuted(muted: boolean) {
+    this._muted = muted
+    this.sound.setMute(muted)
+  }
 
   onReady(cb: ReadyCb) {
     if (this.sys.isActive()) cb()
@@ -197,6 +215,8 @@ export class DiceScene extends Phaser.Scene {
       clearTimeout(this.animTimer)
       this.animTimer = null
     }
+    this.bgMusic?.stop()
+    this.bgMusic = null
     this.readyCbs = []
     this.rollCompleteCb = null
     this.isAnimating = false

@@ -76,7 +76,6 @@ The win/loss outcome is determined before the animation starts, so the correct f
 
 ## What I'd improve with more time
 
-- Add sound effects (dice roll sfx, win/loss jingle)
 - Persist roll history to `localStorage`
 - Add bet sizing and a coin balance mechanic
 - Animate the result text with a bounce tween

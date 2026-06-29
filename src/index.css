@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+@theme {
+  /* Edit these variables to retheme the entire app */
+  --color-page-bg:   #0f0f0f;
+  --color-panel-bg:  #16213e;
+  --color-canvas-bg: #1a1a2e;
+  --font-display: 'Playfair Display', Georgia, serif;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -7,8 +15,8 @@
 body {
   margin: 0;
   padding: 0;
-  font-family: system-ui, -apple-system, sans-serif;
-  background: #0f0f0f;
+  font-family: var(--font-display);
+  background: var(--color-page-bg);
   color: #f1f1f1;
 }
 

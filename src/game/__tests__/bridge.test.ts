@@ -7,7 +7,7 @@ function createMockBridge(): GameBridge {
   let destroyed = false
 
   return {
-    rollDice: vi.fn((result: number) => {
+    rollDice: vi.fn((result: number, _outcome: 'win' | 'loss') => {
       if (!destroyed) rollCompleteCb?.(result)
     }),
     setMuted: vi.fn((m: boolean) => {
@@ -44,7 +44,7 @@ describe('GameBridge mock', () => {
   it('fires onRollComplete with the rolled result', () => {
     const cb = vi.fn()
     bridge.onRollComplete(cb)
-    bridge.rollDice(42)
+    bridge.rollDice(42, 'win')
     expect(cb).toHaveBeenCalledWith(42)
   })
 
@@ -52,7 +52,7 @@ describe('GameBridge mock', () => {
     const cb = vi.fn()
     bridge.onRollComplete(cb)
     bridge.destroy()
-    bridge.rollDice(42)
+    bridge.rollDice(42, 'win')
     expect(cb).not.toHaveBeenCalled()
   })
 
@@ -61,7 +61,7 @@ describe('GameBridge mock', () => {
     const second = vi.fn()
     bridge.onRollComplete(first)
     bridge.onRollComplete(second)
-    bridge.rollDice(10)
+    bridge.rollDice(10, 'loss')
     expect(first).not.toHaveBeenCalled()
     expect(second).toHaveBeenCalledWith(10)
   })

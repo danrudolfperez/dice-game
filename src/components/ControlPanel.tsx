@@ -27,7 +27,7 @@ export function ControlPanel({
   const canRoll = !isRolling && !isDisabled
 
   return (
-    <div className="flex flex-col gap-6 p-6 bg-[#16213e] rounded-xl border border-violet-900/40 min-w-[240px]">
+    <div className="flex flex-col gap-6 p-6 bg-panel-bg rounded-xl border border-violet-900/40 min-w-[240px]">
       <h1 className="text-xl font-bold text-violet-300 tracking-wide">Dice Game</h1>
 
       <div className="flex flex-col gap-2">
