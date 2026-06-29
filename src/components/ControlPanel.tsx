@@ -27,11 +27,9 @@ export function ControlPanel({
   const canRoll = !isRolling && !isDisabled
 
   return (
-    <div className="flex flex-col gap-6 p-6 bg-panel-bg rounded-xl border border-violet-900/40 min-w-[240px]">
-      <h1 className="text-xl font-bold text-violet-300 tracking-wide">Dice Game</h1>
-
+    <div className="flex flex-col mt-2 gap-6 p-6 rounded-2xl min-w-60 bg-green-950 border border-green-900 shadow-md">
       <div className="flex flex-col gap-2">
-        <label className="text-sm text-gray-400 font-medium flex items-center justify-between">
+        <label className="text-sm text-white font-medium flex items-center justify-between">
           Target number
           <span className="text-white font-mono font-bold text-base">{target}</span>
         </label>
@@ -42,9 +40,9 @@ export function ControlPanel({
           value={target}
           onChange={(e) => onTargetChange(Number(e.target.value))}
           disabled={isRolling}
-          className="w-full cursor-pointer accent-violet-500 disabled:opacity-50"
+          className="dice-slider"
         />
-        <div className="flex justify-between text-xs text-gray-600">
+        <div className="flex justify-between text-sm text-gold">
           <span>{ROLL_MIN}</span>
           <span>{ROLL_MAX}</span>
         </div>
@@ -53,10 +51,15 @@ export function ControlPanel({
       <button
         onClick={onRoll}
         disabled={!canRoll}
-        className="relative py-3 px-6 rounded-xl font-bold text-lg tracking-wide transition-all duration-150
-          bg-violet-600 hover:bg-violet-500 active:scale-95
+        className="relative py-3 px-6 font-bold text-lg tracking-wide transition-all duration-150
+          hover:brightness-110 active:scale-95
           disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100
-          text-white shadow-lg shadow-violet-900/40"
+          text-white"
+        style={{
+          backgroundImage: "url('/assets/dice-game-button.png')",
+          backgroundSize: '100% 100%',
+          minHeight: '52px',
+        }}
       >
         {isRolling ? (
           <span className="flex items-center justify-center gap-2">
@@ -68,7 +71,7 @@ export function ControlPanel({
         )}
       </button>
 
-      {!isRolling && <p className="text-xs text-gray-500 text-center -mt-3">or press Space</p>}
+      {!isRolling && <p className="text-xs text-gold text-center -mt-5">or press Space</p>}
 
       {lastResult && <ResultDisplay result={lastResult} />}
 
@@ -76,7 +79,7 @@ export function ControlPanel({
 
       <button
         onClick={onMuteToggle}
-        className="mt-auto flex items-center gap-2 text-sm text-gray-400 hover:text-gray-200 transition-colors"
+        className="mt-auto flex items-center gap-2 text-sm text-gold/70 hover:text-gold transition-colors"
       >
         <span className="text-lg">{isMuted ? '🔇' : '🔊'}</span>
         {isMuted ? 'Unmute' : 'Mute'}
@@ -108,7 +111,13 @@ function StreakDisplay({ streak }: { streak: number }) {
   const isWinStreak = streak > 0
   const count = Math.abs(streak)
   return (
-    <div className="text-center text-sm text-gray-400">
+    <div
+      className="text-center text-sm py-3 px-4 rounded-xl"
+      // style={{
+      //   backgroundImage: "url('/assets/dice-game-badge-bg.png')",
+      //   backgroundSize: '100% 100%',
+      // }}
+    >
       {isWinStreak ? (
         <span className="text-emerald-400 font-semibold">{count} win streak 🔥</span>
       ) : (

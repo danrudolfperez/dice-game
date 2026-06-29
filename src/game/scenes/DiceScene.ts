@@ -56,8 +56,6 @@ export class DiceScene extends Phaser.Scene {
     const cx = CANVAS_W / 2
     const cy = CANVAS_H / 2 - 10
 
-    this.cameras.main.setBackgroundColor(theme.colors.canvasBg)
-
     // Ground shadow (static, drawn behind the cube)
     this.shadowGraphics = this.add.graphics()
     this.shadowGraphics.fillStyle(theme.dice.shadow.color, theme.dice.shadow.alpha)

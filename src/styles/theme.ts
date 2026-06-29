@@ -10,11 +10,12 @@ export const theme = {
     // Layout backgrounds (also exposed as Tailwind utilities via @theme in index.css)
     pageBg: '#0f0f0f',
     panelBg: '#16213e',
-    canvasBg: '#1a1a2e',
+    canvasBg: '#1a0a04',
 
     // Text / accent
-    accentText: '#a78bfa',   // violet-300 — result text, loading label
-    diceLabel: '#1a1a2e',    // dark bg color — number printed on face
+    gold: '#d4a843',         // warm gold — all supporting UI text and accents
+    accentText: '#d4a843',   // Phaser result text ("Rolled: N") — matches gold
+    diceLabel: '#1a0a04',    // dark wood color — number printed on face
   },
 
   dice: {

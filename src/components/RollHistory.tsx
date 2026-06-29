@@ -8,11 +8,15 @@ export function RollHistory({ history }: RollHistoryProps) {
   if (history.length === 0) return null
 
   return (
-    <div className="flex flex-col gap-2 mt-2">
-      <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider px-1">
-        History
-      </h2>
-      <ul className="flex flex-col gap-1 max-h-64 overflow-y-auto pr-1">
+    <div
+      className="flex flex-col gap-2 mt-2 p-8 rounded-xl"
+      style={{
+        backgroundImage: "url('/assets/dice-game-canvas-bg.png')",
+        backgroundSize: '100% 100%',
+      }}
+    >
+      <h2 className="text-sm font-semibold text-gold uppercase tracking-wider px-1">History</h2>
+      <ul className="flex flex-col gap-1 max-h-32 overflow-y-auto pr-1">
         {history.map((entry) => (
           <li
             key={entry.id}
