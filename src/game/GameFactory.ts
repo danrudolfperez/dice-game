@@ -1,7 +1,6 @@
 import Phaser from 'phaser'
 import { DiceScene } from './scenes/DiceScene'
 import type { GameBridge } from '@/types/bridge'
-import { theme } from '@/styles/theme'
 
 const CANVAS_W = 400
 const CANVAS_H = 400
