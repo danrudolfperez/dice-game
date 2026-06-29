@@ -49,13 +49,14 @@ function App() {
   useKeyboardShortcut('Space', handleRoll, !isLoading && !isRolling && !!bridge)
 
   return (
-    <div className="min-h-screen bg-page-bg flex items-center justify-center p-4">
-      <div className="flex flex-col lg:flex-row gap-6 w-full max-w-3xl">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 gap-4">
+      <img src="/assets/logo.png" alt="Logo" className="h-36 object-contain" />
+      <div className="flex flex-col lg:flex-row gap-4 w-full max-w-3xl">
         <div className="flex-1 flex flex-col gap-4">
           <GameCanvas ref={canvasRef} isLoading={isLoading} error={error} />
         </div>
 
-        <div className="flex flex-col gap-4 lg:w-72">
+        <div className="flex flex-col gap-2 lg:w-72">
           <ControlPanel
             target={target}
             onTargetChange={handleTargetChange}

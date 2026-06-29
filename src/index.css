@@ -2,9 +2,10 @@
 
 @theme {
   /* Edit these variables to retheme the entire app */
-  --color-page-bg:   #0f0f0f;
+  --color-page-bg:   #1a4a1a;
   --color-panel-bg:  #16213e;
-  --color-canvas-bg: #1a1a2e;
+  --color-canvas-bg: #1a0a04;
+  --color-gold:      #d4a843;
   --font-display: 'Playfair Display', Georgia, serif;
 }
 
@@ -16,11 +17,92 @@ body {
   margin: 0;
   padding: 0;
   font-family: var(--font-display);
-  background: var(--color-page-bg);
+  background-color: var(--color-page-bg);
+  background-image: url('/assets/dice-game-bg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
   color: #f1f1f1;
 }
 
 #root {
   width: 100%;
   min-height: 100svh;
+}
+
+/* Vignette overlay — darkens edges over the background image */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.72) 100%);
+  z-index: 0;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Custom range slider ─────────────────────────────────────── */
+.dice-slider {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 40px;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  border: none;
+  outline: none;
+}
+
+.dice-slider:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Webkit (Chrome, Safari, Edge) */
+.dice-slider::-webkit-slider-runnable-track {
+  background-image: url('/assets/dice-game-progress.png');
+  background-size: 100% 100%;
+  height: 40px;
+  border-radius: 20px;
+}
+
+.dice-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 46px;
+  height: 46px;
+  background-image: url('/assets/dice-game-progress-tracker.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: transparent;
+  border: none;
+  margin-top: -3px;
+  cursor: pointer;
+}
+
+/* Firefox */
+.dice-slider::-moz-range-track {
+  background-image: url('/assets/dice-game-progress.png');
+  background-size: 100% 100%;
+  height: 40px;
+  border-radius: 20px;
+}
+
+.dice-slider::-moz-range-thumb {
+  width: 46px;
+  height: 46px;
+  background-image: url('/assets/dice-game-progress-tracker.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
 }

@@ -14,7 +14,7 @@ export function createGame(container: HTMLElement): GameBridge {
     width: CANVAS_W,
     height: CANVAS_H,
     parent: container,
-    backgroundColor: theme.colors.canvasBg,
+    transparent: true,
     scene: [scene],
     scale: {
       mode: Phaser.Scale.FIT,
